@@ -14,3 +14,7 @@ jobs:
       - name: Test
         run: |
           make test
+      - name: Deploy
+        if: ${{ github.ref_name == 'dev' }}
+        run: |
+          make deploy
