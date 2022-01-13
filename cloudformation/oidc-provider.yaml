@@ -1,15 +1,19 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: >-
   This template creates a custom an OIDC provider for use by GitHub Actions
-# Parameters:
-#   IamAccessKeyVersion:
-#     Type: Number
-#     Default: 1
-#     Description:  Version number of the AWS access keys. Increment this number to rotate the keys.
-#     MinValue: 1
-#   KmsKeyArn:
-#     Type: String
-#     Description: ARN of the KMS key used to encrypt the SMTP credentials in Parameter Store
+Parameters:
+  GitHubOrgName:
+    Type: String
+    Default: tsamuel33
+    Description:  Name of the GitHub organization in which the repo resides
+  GitHubRepoName:
+    Type: String
+    Description: Name of the app's GitHub repo
+
+Mappings:
+  GitHub:
+    Details:
+      Thumbprint: 6938fd4d98bab03faadb97b34396831e3780aea1
 
 Resources:
   GitHubActionsOIDC:
@@ -18,7 +22,7 @@ Resources:
       ClientIdList: 
         - sts.amazonaws.com
       ThumbprintList: 
-        - 6938fd4d98bab03faadb97b34396831e3780aea1
+        - !FindInMap [GitHub, Details, Thumbprint]
       Url: https://token.actions.githubusercontent.com
   S3ListRole:
     Type: AWS::IAM::Role
@@ -32,7 +36,8 @@ Resources:
             Action: "sts:AssumeRoleWithWebIdentity"
             Condition:
               StringEquals:
-                token.actions.githubusercontent.com:sub: "repo:tsamuel33/custom-runner-test:ref:refs/heads/main"
+                # token.actions.githubusercontent.com:sub: "repo:tsamuel33/custom-runner-test:ref:refs/heads/main"
+                token.actions.githubusercontent.com:sub: !Sub "repo:{GitHubOrgName}/{GitHubRepoName}"
       Description: GitHub Action role to list S3 objects
       # MaxSessionDuration: Integer
       Path: /managed/
