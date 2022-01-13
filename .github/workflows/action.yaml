@@ -26,4 +26,6 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: List buckets
         run: |
+          pwd
+          python3
           aws s3 ls
