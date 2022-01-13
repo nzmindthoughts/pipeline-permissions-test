@@ -35,11 +35,15 @@ Resources:
               Federated: !Ref GitHubActionsOIDC
             Action: "sts:AssumeRoleWithWebIdentity"
             Condition:
-              StringEquals:
-                # token.actions.githubusercontent.com:sub: "repo:tsamuel33/custom-runner-test:ref:refs/heads/main"
-                token.actions.githubusercontent.com:sub: !Sub "repo:{GitHubOrgName}/{GitHubRepoName}"
+              ForAllValues:StringEqualsIgnoreCase:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/dev"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/test"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/staging"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/master"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/main"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/example"
       Description: GitHub Action role to list S3 objects
-      # MaxSessionDuration: Integer
       Path: /managed/
       RoleName: GitHubActionsS3ListRole
       Tags: 
