@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  This template creates a custom an OIDC provider for use by GitHub Actions
+# Parameters:
+#   IamAccessKeyVersion:
+#     Type: Number
+#     Default: 1
+#     Description:  Version number of the AWS access keys. Increment this number to rotate the keys.
+#     MinValue: 1
+#   KmsKeyArn:
+#     Type: String
+#     Description: ARN of the KMS key used to encrypt the SMTP credentials in Parameter Store
+
+Resources:
+  GitHubActionsOIDC:
+    Type: AWS::IAM::OIDCProvider
+    Properties: 
+      ClientIdList: 
+        - sts.amazonaws.com
+      ThumbprintList: 
+        - 6938fd4d98bab03faadb97b34396831e3780aea1
+      Url: https://token.actions.githubusercontent.com
+  S3ListRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement: 
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubActionsOIDC
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:sub: "repo:tsamuel33/custom-runner-test:ref:refs/heads/main"
+      Description: GitHub Action role to list S3 objects
+      # MaxSessionDuration: Integer
+      Path: /managed/
+      RoleName: GitHubActionsS3ListRole
+      Tags: 
+        - Key: Name
+          Value: GitHubActionsS3ListRole
+  GitHubActionsS3ListPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Provides S3 read access
+      ManagedPolicyName: GitHubActionsS3ListPolicy
+      Path: /managed/
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:ListAllMyBuckets
+              - s3:ListBucket
+            Resource: "*"
+      Roles: 
+        - !Ref S3ListRole
