@@ -27,5 +27,7 @@ jobs:
       - name: List buckets
         run: |
           pwd
-          python3
+          ls
+          whoami
+          python3 -m unittest discover
           aws s3 ls
