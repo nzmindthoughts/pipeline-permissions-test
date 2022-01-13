@@ -1,6 +1,12 @@
 name: Test AWS auth workflow
 on:
-  push
+  push:
+    branches:
+      - main
+      - master
+      - dev
+      - test
+      - staging
 env:
   AWS_REGION : "us-east-1"
 permissions:
