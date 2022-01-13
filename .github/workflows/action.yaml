@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Configure AWS credentials
+      - name: Configure AWS creds
         uses: aws-actions/configure-aws-credentials@master
         with:
           role-to-assume: arn:aws:iam::034477685180:role/managed/GitHubActionsS3ListRole
