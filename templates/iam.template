@@ -1,0 +1,37 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Create baseline IAM resources for Security Pipeline
+Parameters:
+  OrgId:
+    Type: String
+    Description:  AWS organization ID
+  AppId:
+    Type: String
+    Description: ID of the application hosted in this account
+
+Resources:
+  GALocalSecurityPipelineStackExecutionRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement: 
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubActionsOIDC
+            Action: "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              ForAllValues:StringEqualsIgnoreCase:
+                token.actions.githubusercontent.com:sub:
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/dev"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/test"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/staging"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/master"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/main"
+                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/example"
+      Description: GitHub Action role to deploy Security Pipeline 
+      Path: /managed/
+      RoleName: GALocalSecurityPipelineStackExecutionRole
+      Tags: 
+        - Key: AWS_Solutions
+          Value: ControlTowerStackSet
