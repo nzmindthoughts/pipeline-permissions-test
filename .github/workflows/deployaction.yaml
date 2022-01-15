@@ -10,7 +10,8 @@ permissions:
       contents: read    # This is required for actions/checkout@v2
 jobs:
   test:
-    uses: ${{ github.repository }}/.github/workflows/test.yaml@${{ github.ref_name }}
+    # uses: ${{ github.repository }}/.github/workflows/test.yaml@${{ github.ref_name }}
+    uses: ${{ github.repository }}/.github/workflows/test.yaml@dev
   # deploy:
   #   needs: test
   #   runs-on: ubuntu-latest
