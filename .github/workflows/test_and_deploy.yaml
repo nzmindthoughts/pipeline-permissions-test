@@ -1,0 +1,39 @@
+name: Test and Deploy CloudFormation Templates
+on:
+  push:
+    branches:
+      - dev
+env:
+  AWS_REGION : "us-east-1"
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v2
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          make test
+  deploy:
+    needs: test
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+  #     - name: Configure AWS creds
+  #       uses: aws-actions/configure-aws-credentials@master
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.DEV_ACCOUNT }}:role/managed/GitHubActionsS3ListRole
+  #         role-session-name: S3Session
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: List buckets
+  #       run: |
+  #         pwd
+  #         ls
+  #         whoami
+  #         python3 -m unittest discover
+  #         aws s3 ls

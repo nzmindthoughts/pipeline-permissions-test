@@ -1,0 +1,106 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Manages Key Management Service (KMS)'
+
+Parameters:
+  AppEnvironment:
+    Type: 'String'
+    AllowedValues:
+    - dev
+    - test
+    - staging
+    - prod
+
+Conditions:
+  isDev: !Equals [!Ref 'AppEnvironment', 'dev']
+  isTest: !Equals [!Ref 'AppEnvironment', 'test']
+  isProd: !Equals [!Ref 'AppEnvironment', 'prod']
+
+Mappings:
+  AccountMap:
+    "123456789012":
+      IamRolesReady: "Yes"
+      EngineerARN: "arn:aws:iam::123456789012:role/EngineerRole"
+      WorkflowARN: "arn:aws:iam::123456789012:role/WorkflowRole"
+      DataAccessARN: "arn:aws:iam::123456789012:role/DataAccessRole"
+
+Resources:
+  GeneralPurposeEncryptionKey:
+    Type: 'AWS::KMS::Key'
+    Properties:
+      Description: 'Managed General Purpose Encryption Key'
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: 'Enable IAM permissions only for administration of the key'
+          Effect: Allow
+          Principal:
+            AWS:
+            - !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+          Action:
+          - kms:CreateAlias
+          - kms:CreateGrant
+          - kms:CreateKey
+          - kms:DescribeKey
+          - kms:EnableKey
+          - kms:EnableKeyRotation
+          - kms:ListAliases
+          - kms:ListGrants
+          - kms:ListKeyPolicies
+          - kms:ListKeys
+          - kms:ListResourceTags
+          - kms:ListRetirableGrants
+          - kms:PutKeyPolicy
+          - kms:UpdateAlias
+          - kms:UpdateKeyDescription
+          - kms:RevokeGrant
+          - kms:DisableKey
+          - kms:DisableKeyRotation
+          - kms:GetKeyPolicy
+          - kms:GetKeyRotationStatus
+          - kms:DeleteAlias
+          - kms:TagResource
+          - kms:UntagResource
+          - kms:ListResourceTags
+          - kms:ScheduleKeyDeletion
+          - kms:CancelKeyDeletion
+          Resource: '*'
+        - Sid: 'Allow use of the key by the principals on the account'
+          Effect: Allow
+          Principal: '*'
+          Action:
+          - kms:Encrypt
+          - kms:Decrypt
+          - kms:ReEncryptTo
+          - kms:ReEncryptFrom
+          - kms:GenerateDataKey
+          - kms:GenerateDataKeyWithoutPlaintext
+          - kms:DescribeKey
+          Resource: '*'
+          Condition:
+            StringEquals:
+              "kms:CallerAccount": !Sub ${AWS::AccountId}
+        - Sid: 'Allow CloudFront Flow Logs to use the key'
+          Effect: Allow
+          Principal:
+            Service: delivery.logs.amazonaws.com
+          Action:
+          - kms:GenerateDataKey
+          Resource: '*'
+      Tags:
+        - Key: "secops:tags:managed_by"
+          Value: "AWS Managed Security Pipeline"
+
+  GeneralPurposeEncryptionKeyAlias:
+    Type: 'AWS::KMS::Alias'
+    Properties:
+      TargetKeyId: !Ref GeneralPurposeEncryptionKey
+      AliasName: !Sub 'alias/GeneralPurposeEncryptionKey'
+
+Outputs:
+  GeneralPurposeEncryptionKeyArn:
+    Value: !GetAtt 'GeneralPurposeEncryptionKey.Arn'
+    Export:
+      Name: !Sub 'GeneralPurposeEncryptionKeyArn'

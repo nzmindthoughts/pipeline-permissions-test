@@ -12,25 +12,27 @@ Parameters:
 Resources:
   S3ListRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Principal:
               Service: cloudformation.amazonaws.com
-            Action: sts:AssumeRole  
+            Action: sts:AssumeRole
       Description: GitHub Action role to list S3 objects
       Path: /managed/
       RoleName: GitHubActionsS3ListRole
-      Tags: 
+      Tags:
         - Key: Org
           Value: !Ref OrgId
         - Key: AppCode
           Value: !Ref AppId
+        - Key: "secops:tags:managed_by"
+          Value: "AWS Managed Security Pipeline"
   GitHubActionsS3ListPolicy:
     Type: AWS::IAM::ManagedPolicy
-    Properties: 
+    Properties:
       Description: Provides S3 read access
       ManagedPolicyName: GitHubActionsS3ListPolicy
       Path: /managed/
@@ -42,5 +44,5 @@ Resources:
               - s3:ListAllMyBuckets
               - s3:ListBucket
             Resource: "*"
-      Roles: 
+      Roles:
         - !Ref S3ListRole
