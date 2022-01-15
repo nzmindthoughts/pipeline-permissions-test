@@ -1,0 +1,20 @@
+name: Test validity of Cloudformation templates
+on:
+  push:
+    branches:
+      - dev
+permissions:
+      contents: read    # This is required for actions/checkout@v2
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          make test
+      - name: Deploy
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          make deploy
