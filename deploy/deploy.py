@@ -121,52 +121,16 @@ def create_stack(stackname,templatestring,parameters,capability,accountid):
     )
     return stackcreateresponse
 
-def update_stack():
-    response = client.update_stack(
-        StackName='string',
-        TemplateBody='string',
-        TemplateURL='string',
-        UsePreviousTemplate=True|False,
-        StackPolicyDuringUpdateBody='string',
-        StackPolicyDuringUpdateURL='string',
-        Parameters=[
-            {
-                'ParameterKey': 'string',
-                'ParameterValue': 'string',
-                'UsePreviousValue': True|False,
-                'ResolvedValue': 'string'
-            },
-        ],
-        Capabilities=[
-            'CAPABILITY_IAM'|'CAPABILITY_NAMED_IAM'|'CAPABILITY_AUTO_EXPAND',
-        ],
-        ResourceTypes=[
-            'string',
-        ],
-        RoleARN='string',
-        RollbackConfiguration={
-            'RollbackTriggers': [
-                {
-                    'Arn': 'string',
-                    'Type': 'string'
-                },
-            ],
-            'MonitoringTimeInMinutes': 123
-        },
-        StackPolicyBody='string',
-        StackPolicyURL='string',
-        NotificationARNs=[
-            'string',
-        ],
-        Tags=[
-            {
-                'Key': 'string',
-                'Value': 'string'
-            },
-        ],
-        DisableRollback=True|False,
-        ClientRequestToken='string'
+def update_stack(stackname,templatestring,parameters,capability,accountid):
+    stackupdateresponse = client.update_stack(
+        StackName=stackname,
+        TemplateBody=templatestring,
+        Parameters=parameters,
+        Capabilities=[capability],
+        RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
+        DisableRollback=False
     )
+    return stackupdateresponse
     
 def main():
     # # # accountnumber = args['account_number']
@@ -211,6 +175,7 @@ def main():
             logger.info('Creation of stack: %s in progress...' % createtemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             raise error
+            active = False
         while active and count <= max_count:
             sleep(CF_CHECK_PERIOD_SECONDS)
             stackstatus = get_stack(stackname)
@@ -226,16 +191,45 @@ def main():
                     logger.info('Creation of stack: %s still in progress...' % createtemplateresponse['StackId'])
                 elif count >= max_count:
                     logger.error('Creation of stack: %s timed out.' % createtemplateresponse['StackId'])
+    for update in update_list:
+        active = True
+        count = 1
+        max_count = TIMEOUT_SECONDS / CF_CHECK_PERIOD_SECONDS
+        templatename = update['Template']
+        stackname = update['StackName']
+        if templatename == 'iam.template':
+            templatecapability = 'CAPABILITY_NAMED_IAM'
+        else:
+            templatecapability = ''
+        templatelocation = str(TEMPLATE_DIR) + '\\' + templatename
+        cf_template_yaml = load_template(templatelocation)
+        try:     
+            updatetemplateresponse = update_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
+            logger.info('Update of stack: %s in progress...' % updatetemplateresponse['StackId'])
+        except botocore.exceptions.ClientError as error:
+            if error.response['Error']['Code'] == 'ValidationError' and error.response['Error']['Message'] == 'No updates are to be performed.':
+                logger.info('No updates required for stack: %s' % stackname)
+                active = False
+            else:
+                raise error
+                active = False
+        while active and count <= max_count:
+            sleep(CF_CHECK_PERIOD_SECONDS)
+            stackstatus = get_stack(stackname)
+            if stackstatus in SUCCESS_STATUSES:
+                logger.info('Update of stack: %s complete.' % updatetemplateresponse['StackId'])
+                active = False
+            elif stackstatus in FAILURE_STATUSES:
+                logger.error('Failed to update stack: %s' % updatetemplateresponse['StackId'])
+                active = False
+            else:
+                count +=1
+                if count < max_count:
+                    logger.info('Update of stack: %s still in progress...' % updatetemplateresponse['StackId'])
+                elif count >= max_count:
+                    logger.error('Update of stack: %s timed out.' % updatetemplateresponse['StackId'])
                 
 
 if __name__ == "__main__":
     main()
-    # # status = "CREATE_COMPLETE"
-    # # if status in SUCCESS_STATUSES:
-    # #     print("status: %s is a success" % status)
-    # # elif status in FAILURE_STATUSES:
-    # #     print("status: %s is a failure" % status)
-    # # else:
-    # #     print("unknown status")
-    # stackstatus = get_stack('managed-security-pipeline-iam-11413T3ch')
-    # print(stackstatus)
+    
