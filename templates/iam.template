@@ -1,0 +1,46 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Create baseline IAM resources for Security Pipeline
+Parameters:
+  OrgId:
+    Type: String
+    Description:  AWS organization ID
+  AppId:
+    Type: String
+    Description: ID of the application hosted in this account
+
+Resources:
+  S3ListRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: cloudformation.amazonaws.com
+            Action: sts:AssumeRole  
+      Description: GitHub Action role to list S3 objects
+      Path: /managed/
+      RoleName: GitHubActionsS3ListRole
+      Tags: 
+        - Key: Org
+          Value: !Ref OrgId
+        - Key: AppCode
+          Value: !Ref AppId
+  GitHubActionsS3ListPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties: 
+      Description: Provides S3 read access
+      ManagedPolicyName: GitHubActionsS3ListPolicy
+      Path: /managed/
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:ListAllMyBuckets
+              - s3:ListBucket
+            Resource: "*"
+      Roles: 
+        - !Ref S3ListRole
