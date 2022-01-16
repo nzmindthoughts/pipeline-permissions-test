@@ -1,0 +1,65 @@
+name: Code promotion pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      source_branch:
+        type: choice
+        description: 'Branch to promote code FROM'
+        required: true
+        default: 'dev'
+        options:
+          - dev
+          - test
+          - staging
+      target_branch:
+        type: choice
+        description: 'Branch to promote code TO'
+        required: true
+        options:
+          - test
+          - staging
+          - main
+          - master
+env:
+  AWS_REGION : "us-east-1"
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v2
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ inputs.source_branch }}
+      - name: Create PR
+        run: |
+          gh pr create --base ${{ inputs.target_branch }} --head ${{ inputs.source_branch }} --title 'Promoting from ${{ inputs.source_branch }} to ${{ inputs.target_branch }}'
+      - name: Merge PR
+        run: |
+          gh merge
+      - name: Promote
+        # determine if source_branch is the right choice in the line below
+        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ inputs.source_branch }}
+        with:
+          target_branch: ${{ inputs.target_branch }}
+  # ${{ github.actor }} can be used to get the name of user that launched workflow
+      # steps:
+      # - uses: actions/checkout@v2
+      # - name: Create commits
+      #   run: |
+      #     git config user.name 'Peter Evans'
+      #     git config user.email 'peter-evans@users.noreply.github.com'
+      #     date +%s > report.txt
+      #     git commit -am "Modify tracked file during workflow"
+      #     date +%s > new-report.txt
+      #     git add -A
+      #     git commit -m "Add untracked file during workflow"
+      # - name: Uncommitted change
+      #   run: date +%s > report.txt
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v3
+
+  #https://docs.github.com/en/actions/advanced-guides/using-github-cli-in-workflows
+
