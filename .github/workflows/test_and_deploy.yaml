@@ -44,4 +44,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Deploy Templates
         run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}
+          make deploy ACCOUNT_NUMBER=${{ secrets.DEV_ACCOUNT_NUMBER }}

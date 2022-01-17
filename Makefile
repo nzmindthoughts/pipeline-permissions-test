@@ -9,7 +9,7 @@ test:
 	@echo "OK: $@"
 
 deploy:
-	@python3 -m ./deploy/deploy.py --account_number $(ACCOUNT_NUMBER)
+	@python3 ./deploy/deploy.py --account_number $(ACCOUNT_NUMBER)
 	@echo "OK: $@"
 
 clean:
