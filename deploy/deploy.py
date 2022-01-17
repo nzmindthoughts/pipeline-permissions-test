@@ -130,8 +130,8 @@ def update_stack(stackname,templatestring,parameters,capability,accountid):
 def main():
     accountnumber = args['account_number']
     # accountnumber = get_account_number()
-    appid = get_json_attribute(str(CONFIG_DIR)+'\\'+CONFIG_FILE_NAME, 'AppId')
-    parameter_list = create_parameter_list(str(CONFIG_DIR)+'\\'+CONFIG_FILE_NAME)
+    appid = get_json_attribute(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME, 'AppId')
+    parameter_list = create_parameter_list(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME)
     logger.info('Getting CloudFormation templates')
     templates = get_security_templates(TEMPLATE_DIR)
     filenames = get_file_names(templates)
@@ -162,7 +162,7 @@ def main():
             templatecapability = 'CAPABILITY_NAMED_IAM'
         else:
             templatecapability = ''
-        templatelocation = str(TEMPLATE_DIR) + '\\' + templatename
+        templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:     
             createtemplateresponse = create_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
@@ -195,7 +195,7 @@ def main():
             templatecapability = 'CAPABILITY_NAMED_IAM'
         else:
             templatecapability = ''
-        templatelocation = str(TEMPLATE_DIR) + '\\' + templatename
+        templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:     
             updatetemplateresponse = update_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
