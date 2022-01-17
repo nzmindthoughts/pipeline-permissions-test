@@ -8,6 +8,13 @@ Parameters:
   AppId:
     Type: String
     Description: ID of the application hosted in this account
+  AppEnvironment:
+    Type: 'String'
+    AllowedValues:
+    - dev
+    - test
+    - staging
+    - prod
 
 Resources:
   S3ListRole:
