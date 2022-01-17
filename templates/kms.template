@@ -3,6 +3,12 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Manages Key Management Service (KMS)'
 
 Parameters:
+  OrgId:
+    Type: String
+    Description:  AWS organization ID
+  AppId:
+    Type: String
+    Description: ID of the application hosted in this account
   AppEnvironment:
     Type: 'String'
     AllowedValues:
