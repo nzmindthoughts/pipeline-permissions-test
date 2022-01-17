@@ -44,6 +44,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Install Boto3
         run: |
+          sudo apt update
           sudo apt install -y awscli
       - name: Deploy Templates
         run: |
