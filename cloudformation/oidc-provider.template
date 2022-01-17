@@ -37,7 +37,7 @@ Resources:
               Federated: !Ref GitHubActionsOIDC
             Action: "sts:AssumeRoleWithWebIdentity"
             Condition:
-              ForAllValues:StringEqualsIgnoreCase:
+              StringEqualsIgnoreCase:
                 token.actions.githubusercontent.com:sub:
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/dev"
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/test"
