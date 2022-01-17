@@ -15,9 +15,9 @@ on:
         default: ${{ github.ref_name }}
 env:
   AWS_REGION : "us-east-1"
-# permissions:
-#       id-token: write
-#       contents: read    # This is required for actions/checkout@v2
+permissions:
+      id-token: write
+      contents: read    # This is required for actions/checkout@v2
 jobs:
   Test:
     runs-on: ubuntu-latest
@@ -25,12 +25,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::034477685180:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
       - name: Test
         run: |
           make test
@@ -38,14 +32,14 @@ jobs:
     needs: test
     if: github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'master'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name }}
+    # environment: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+          role-to-assume: arn:aws:iam::${{ secrets.DEV_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
           role-session-name: GASession
           aws-region: ${{ env.AWS_REGION }}
       - name: Deploy Templates
