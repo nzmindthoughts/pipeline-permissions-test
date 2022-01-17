@@ -31,10 +31,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@master
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          # role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-to-assume: arn:aws:iam::034477685180:role/managed/GALocalSecurityPipelineAssumedRole
+          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
           role-session-name: GASession
           aws-region: ${{ env.AWS_REGION }}
       - name: Deploy Templates
