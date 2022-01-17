@@ -32,42 +32,55 @@ env:
   AWS_REGION : "us-east-1"
 permissions:
       id-token: write
-      contents: read    # This is required for actions/checkout@v2
+      contents: write    # This is required for actions/checkout@v2
+      pull-requests: write
+      # actions:
+      # deployments: write
+
 jobs:
   Promote:
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target_branch }}
+    environment: ${{ github.event.inputs.target_branch }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
-          ref: ${{ inputs.source_branch }}
-      - name: Create PR
+          ref: ${{ github.event.inputs.source_branch }}
+      - name: Look for existing open PR
         run: |
-          gh pr create --base ${{ inputs.target_branch }} --head ${{ inputs.source_branch }} --title 'Promotion Pipeline: ${{ inputs.source_branch }} to ${{ inputs.target_branch }}'  --body "Promoting code from ${{ inputs.source_branch }} to ${{ inputs.target_branch }}. Pipeline initiated by ${{ github.actor }}"
+          pullreqnumber="$(gh pr status --json number,baseRefName,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.state == "OPEN")) | .number')"
+          echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create PR
+        id: create-pr
+        if: env.PULL_REQ_NUMBER == ''
+        run: |
+          gh pr create --base ${{ github.event.inputs.target_branch }} --head ${{ github.event.inputs.source_branch }} --title 'Promotion Pipeline: ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}'  --body "Promoting code from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}. Pipeline initiated by ${{ github.actor }}"
+          sleep 30s
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get PR number
         run: |
-          pullreqnumber="$(gh pr status --json number,baseRefName,headRefName,mergeable,state -q '.currentBranch | select((.baseRefName == ${{ inputs.target_branch }}) and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
+          pullreqnumber="$(gh pr status --json number,baseRefName,mergeable,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
           echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge PR with review
-        if: inputs.force_merge == 'false'
+        if: github.event.inputs.force_merge == 'false'
         run: |
           gh pr merge $PULL_REQ_NUMBER -m --auto
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Merge PR without review
-        if: inputs.force_merge == 'true'
+        if: github.event.inputs.force_merge == 'true'
         run: |
-          gh pr merge $PULL_REQ_NUMBER -m --auto --admin
+          gh pr merge $PULL_REQ_NUMBER -m --admin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # - name: Promote
       #   # determine if source_branch is the right choice in the line below
-      #   uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ inputs.source_branch }}
+      #   uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ github.event.inputs.source_branch }}
       #   with:
-      #     target_branch: ${{ inputs.target_branch }}
+      #     target_branch: ${{ github.event.inputs.target_branch }}
 
