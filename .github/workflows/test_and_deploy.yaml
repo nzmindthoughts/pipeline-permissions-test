@@ -44,7 +44,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Install Boto3
         run: |
-          apt install -y awscli
+          sudo apt install -y awscli
       - name: Deploy Templates
         run: |
           make deploy ACCOUNT_NUMBER=${{ secrets.DEV_ACCOUNT_NUMBER }}
