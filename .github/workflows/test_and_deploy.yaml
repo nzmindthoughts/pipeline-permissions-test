@@ -1,6 +1,12 @@
 name: Test and Deploy CloudFormation Templates
 on:
   push:
+    branches:
+      - dev
+      - test
+      - staging
+      - main
+      - master
   workflow_call:
     inputs:
       target_branch:
@@ -12,28 +18,27 @@ env:
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
-      deployments: read
 jobs:
-  # Test:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Test
-  #       run: |
-  #         make test
-  Deploy:
-    # needs: test
-    # if: github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'master'
+  Test:
     runs-on: ubuntu-latest
-    # environment: ${{ github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Test
+        run: |
+          make test
+  Deploy:
+    needs: test
+    if: github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'master'
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::034477685180:role/managed/GALocalSecurityPipelineAssumedRole
+          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
           role-session-name: GASession
           aws-region: ${{ env.AWS_REGION }}
       - name: Deploy Templates
