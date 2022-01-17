@@ -54,13 +54,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Create PR
+        id: create-pr
+        if: env.PULL_REQ_NUMBER == ''
         run: |
           gh pr create --base ${{ github.event.inputs.target_branch }} --head ${{ github.event.inputs.source_branch }} --title 'Promotion Pipeline: ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}'  --body "Promoting code from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}. Pipeline initiated by ${{ github.actor }}"
+          sleep 30s
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Get PR number
+        if: steps.create-pr.conclusion == 'success'
         run: |
-          sleep 30s
           pullreqnumber="$(gh pr status --json number,baseRefName,headRefName,mergeable,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
           echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
         env:
