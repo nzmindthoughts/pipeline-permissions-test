@@ -1,8 +1,6 @@
 name: Test and Deploy CloudFormation Templates
 on:
-  # push:
-    # branches:
-    #   - dev
+  push:
   workflow_call:
     inputs:
       target_branch:
@@ -15,7 +13,7 @@ permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
 jobs:
-  test:
+  Test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,11 +21,11 @@ jobs:
       - name: Test
         run: |
           make test
-  deploy:
+  Deploy:
     needs: test
     if: github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'master'
     runs-on: ubuntu-latest
-    environment: ${{ inputs.target_branch }}
+    environment: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -39,4 +37,4 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
       - name: Deploy Templates
         run: |
-          make deploy
+          make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}

@@ -20,14 +20,23 @@ on:
           - staging
           - main
           - master
+      force_merge:
+        type: choice
+        description: 'Ignore branch settings and merge without review'
+        required: true
+        options:
+          - 'true'
+          - 'false'
+        default: 'true'
 env:
   AWS_REGION : "us-east-1"
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
 jobs:
-  promote:
+  Promote:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.target_branch }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -35,31 +44,30 @@ jobs:
           ref: ${{ inputs.source_branch }}
       - name: Create PR
         run: |
-          gh pr create --base ${{ inputs.target_branch }} --head ${{ inputs.source_branch }} --title 'Promoting from ${{ inputs.source_branch }} to ${{ inputs.target_branch }}'
-      - name: Merge PR
+          gh pr create --base ${{ inputs.target_branch }} --head ${{ inputs.source_branch }} --title 'Promotion Pipeline: ${{ inputs.source_branch }} to ${{ inputs.target_branch }}'  --body "Promoting code from ${{ inputs.source_branch }} to ${{ inputs.target_branch }}. Pipeline initiated by ${{ github.actor }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get PR number
         run: |
-          gh merge
-      - name: Promote
-        # determine if source_branch is the right choice in the line below
-        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ inputs.source_branch }}
-        with:
-          target_branch: ${{ inputs.target_branch }}
-  # ${{ github.actor }} can be used to get the name of user that launched workflow
-      # steps:
-      # - uses: actions/checkout@v2
-      # - name: Create commits
-      #   run: |
-      #     git config user.name 'Peter Evans'
-      #     git config user.email 'peter-evans@users.noreply.github.com'
-      #     date +%s > report.txt
-      #     git commit -am "Modify tracked file during workflow"
-      #     date +%s > new-report.txt
-      #     git add -A
-      #     git commit -m "Add untracked file during workflow"
-      # - name: Uncommitted change
-      #   run: date +%s > report.txt
-      # - name: Create Pull Request
-      #   uses: peter-evans/create-pull-request@v3
-
-  #https://docs.github.com/en/actions/advanced-guides/using-github-cli-in-workflows
+          pullreqnumber="$(gh pr status --json number,baseRefName,headRefName,mergeable,state -q '.currentBranch | select((.baseRefName == ${{ inputs.target_branch }}) and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
+          echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge PR with review
+        if: inputs.force_merge == 'false'
+        run: |
+          gh pr merge $PULL_REQ_NUMBER -m --auto
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge PR without review
+        if: inputs.force_merge == 'true'
+        run: |
+          gh pr merge $PULL_REQ_NUMBER -m --auto --admin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Promote
+      #   # determine if source_branch is the right choice in the line below
+      #   uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ inputs.source_branch }}
+      #   with:
+      #     target_branch: ${{ inputs.target_branch }}
 
