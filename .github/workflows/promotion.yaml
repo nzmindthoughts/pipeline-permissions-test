@@ -33,6 +33,9 @@ env:
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
+      # actions:
+      deployments: write
+
 jobs:
   Promote:
     runs-on: ubuntu-latest
