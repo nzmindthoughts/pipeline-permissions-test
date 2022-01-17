@@ -66,7 +66,7 @@ jobs:
       - name: Merge PR without review
         if: github.event.inputs.force_merge == 'true'
         run: |
-          gh pr merge $PULL_REQ_NUMBER -m --auto --admin
+          gh pr merge $PULL_REQ_NUMBER -m --admin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       # - name: Promote
