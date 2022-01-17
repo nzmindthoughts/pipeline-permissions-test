@@ -1,18 +1,13 @@
-from multiprocessing.connection import wait
 import sys
 import os
-# import unittest
-# import re
-# import yaml
 import json
 from pathlib import Path
 from time import sleep
-# from pprint import pprint, pformat
 
 import boto3
 import botocore
 import logging
-# import argparse
+import argparse
 
 # Set up our logger
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s@%(lineno)d: %(message)s')
@@ -49,9 +44,9 @@ TIMEOUT_SECONDS = 900
 client = boto3.client('cloudformation')
 stsclient = boto3.client('sts')
 
-# parser = argparse.ArgumentParser(description='Accept AWS account number')
-# parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
-# args = vars(parser.parse_args())
+parser = argparse.ArgumentParser(description='Accept AWS account number')
+parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
+args = vars(parser.parse_args())
 
 def get_account_number():
     account_response = stsclient.get_caller_identity()
@@ -95,7 +90,7 @@ def get_security_templates(template_dir):
 
 def get_file_name(file):
     file = str(file)
-    file_name =file.split('\\')[-1] #change slash direction for linux
+    file_name =file.split('/')[-1]
     return file_name
 
 def get_file_names(file_list):
@@ -133,9 +128,8 @@ def update_stack(stackname,templatestring,parameters,capability,accountid):
     return stackupdateresponse
     
 def main():
-    # # # accountnumber = args['account_number']
-    # # # print(accountnumber)
-    accountnumber = get_account_number()
+    accountnumber = args['account_number']
+    # accountnumber = get_account_number()
     appid = get_json_attribute(str(CONFIG_DIR)+'\\'+CONFIG_FILE_NAME, 'AppId')
     parameter_list = create_parameter_list(str(CONFIG_DIR)+'\\'+CONFIG_FILE_NAME)
     logger.info('Getting CloudFormation templates')
