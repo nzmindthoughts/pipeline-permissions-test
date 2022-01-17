@@ -31,7 +31,7 @@ Resources:
       Path: /managed/
       RoleName: GitHubActionsS3ListRole
       Tags:
-        - Key: Org
+        - Key: Org1
           Value: !Ref OrgId
         - Key: AppCode
           Value: !Ref AppId
