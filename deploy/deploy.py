@@ -158,10 +158,7 @@ def main():
         max_count = TIMEOUT_SECONDS / CF_CHECK_PERIOD_SECONDS
         templatename = creation['Template']
         stackname = creation['StackName']
-        if templatename == 'iam.template':
-            templatecapability = 'CAPABILITY_NAMED_IAM'
-        else:
-            templatecapability = ''
+        templatecapability = 'CAPABILITY_NAMED_IAM'
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:     
