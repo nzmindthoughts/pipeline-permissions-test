@@ -48,11 +48,6 @@ parser = argparse.ArgumentParser(description='Accept AWS account number')
 parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
 args = vars(parser.parse_args())
 
-def get_account_number():
-    account_response = stsclient.get_caller_identity()
-    account_number = account_response['Account']
-    return account_number
-
 def get_json_attribute(file,attributename):
     with open(file, 'r') as myfile:
         data = myfile.read()
@@ -129,7 +124,6 @@ def update_stack(stackname,templatestring,parameters,capability,accountid):
     
 def main():
     accountnumber = args['account_number']
-    # accountnumber = get_account_number()
     appid = get_json_attribute(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME, 'AppId')
     parameter_list = create_parameter_list(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME)
     logger.info('Getting CloudFormation templates')

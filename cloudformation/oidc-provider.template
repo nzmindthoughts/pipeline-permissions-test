@@ -37,14 +37,13 @@ Resources:
               Federated: !Ref GitHubActionsOIDC
             Action: "sts:AssumeRoleWithWebIdentity"
             Condition:
-              StringEquals:
+              ForAnyValue:StringLike:
                 token.actions.githubusercontent.com:sub:
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/dev"
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/test"
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/staging"
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/master"
                   - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/main"
-                  - !Sub "repo:${GitHubOrgName}/${GitHubRepoName}:ref:refs/heads/example"
       Policies:
         - PolicyName: GALocalSecurityPipelineAssumedRole
           PolicyDocument:
