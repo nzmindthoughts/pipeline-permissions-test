@@ -14,16 +14,16 @@ permissions:
       contents: read    # This is required for actions/checkout@v2
       deployments: read
 jobs:
-  Test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Test
-        run: |
-          make test
+  # Test:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Test
+  #       run: |
+  #         make test
   Deploy:
-    needs: test
+    # needs: test
     if: github.ref_name == 'main' || github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'master'
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name }}
