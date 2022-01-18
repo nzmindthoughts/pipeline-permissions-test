@@ -39,7 +39,6 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
     uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yaml@dev
     with:
       target_branch: ${{ inputs.target_branch }}
