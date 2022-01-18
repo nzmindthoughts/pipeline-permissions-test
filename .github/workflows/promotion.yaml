@@ -80,5 +80,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Promote
         # determine if source_branch is the right choice in the line below
-        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ github.event.inputs.source_branch }}
+        uses: '${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ github.event.inputs.source_branch }}'
 
