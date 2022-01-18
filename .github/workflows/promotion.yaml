@@ -76,6 +76,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   Test:
+    needs: PromoteCode
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
