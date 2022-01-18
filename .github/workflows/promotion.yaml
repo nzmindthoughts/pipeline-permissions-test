@@ -44,7 +44,7 @@ jobs:
     steps:
       - name: Echo placeholder secret
         run: |
-          echo ${{ secrets.PLACEHOLDER }}
+          echo ${{ secrets }}
 #   Promote:
 #     runs-on: ubuntu-latest
 #     # environment: ${{ github.event.inputs.target_branch }}
