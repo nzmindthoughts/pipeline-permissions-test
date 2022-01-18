@@ -11,7 +11,7 @@ runs:
   steps:
     - name: Determine Environment
       run: |
-        if [ ${{ github.ref_name }} == 'dev'] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
+        if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
         then
           echo "::set-output name=target_environment::${{ github.ref_name }}"
         elif [ ${{ github.ref_name }} == 'main' ] || [ ${{ github.ref_name }} == 'master' ]
