@@ -44,9 +44,16 @@ jobs:
     steps:
       - name: Echo placeholder secret
         run: |
-          echo $PLACEHOLDER
+          echo ${{ env.PLACEHOLDER }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::${{ env.PLACEHOLDER }}:role/managed/GALocalSecurityPipelineAssumedRole
+          role-session-name: GASession
+          aws-region: ${{ env.AWS_REGION }}
     env:
       PLACEHOLDER: ${{ secrets.PLACEHOLDER }}
+      AWS_REGION: "us-east-1"
 #   Promote:
 #     runs-on: ubuntu-latest
 #     # environment: ${{ github.event.inputs.target_branch }}
