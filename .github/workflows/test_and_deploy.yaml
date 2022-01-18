@@ -33,7 +33,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Determine Environment
+        id: determine-env
         uses: ./.github/actions/determine-deployment-env
+    outputs:
+      target_environment: ${{ steps.determine-env.outputs.target_environment }}
   DisplayEnv:
     needs: DetermineEnv
     runs-on: ubuntu-latest
