@@ -40,8 +40,10 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    environment: dev
-    steps:
+    uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yaml@dev
+    with:
+      target_branch: ${{ inputs.target_branch }}
+    # steps:
     #   - name: Configure AWS credentials
     #     uses: aws-actions/configure-aws-credentials@v1
     #     with:
@@ -51,10 +53,7 @@ jobs:
     # env:
     #   ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
     #   AWS_REGION: "us-east-1"
-      - name: Call workflow
-        uses: tsamuel33/custom-runner-test/.github/workflows/test_and_deploy.yaml@dev
-        with:
-          target_branch: ${{ inputs.target_branch }}
+        
 #   Promote:
 #     runs-on: ubuntu-latest
 #     # environment: ${{ github.event.inputs.target_branch }}
