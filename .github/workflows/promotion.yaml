@@ -39,7 +39,7 @@ permissions:
 
 jobs:
   test:
-    uses: $tsamuel33/custom-runner-test/.github/workflows/test_and_deploy.yaml@dev
+    uses: tsamuel33/custom-runner-test/.github/workflows/test_and_deploy.yaml@dev
     with:
       target_branch: ${{ inputs.target_branch }}
     # steps:
