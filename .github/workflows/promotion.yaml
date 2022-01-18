@@ -78,9 +78,7 @@ jobs:
           gh pr merge $PULL_REQ_NUMBER -m --admin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Promote
-      #   # determine if source_branch is the right choice in the line below
-      #   uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ github.event.inputs.source_branch }}
-      #   with:
-      #     target_branch: ${{ github.event.inputs.target_branch }}
+      - name: Promote
+        # determine if source_branch is the right choice in the line below
+        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yml@${{ github.event.inputs.source_branch }}
 

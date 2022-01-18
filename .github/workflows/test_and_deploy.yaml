@@ -5,10 +5,14 @@ on:
       - 'templates/**.template'
       - 'config/default.json'
   workflow_call:
-    inputs:
-      target_branch:
-        required: true
-        type: string
+    # inputs:
+    #   target_branch:
+    #     required: true
+    #     type: string
+    # secrets:
+    #   target_environment:
+    #     description: 'GitHub environment to deploy to'
+    #     required: true
 env:
   AWS_REGION : "us-east-1"
 permissions:
@@ -17,25 +21,39 @@ permissions:
 jobs:
   Test:
     runs-on: ubuntu-latest
-    environment: dev
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Test
         run: |
           make test
-  DeployToDev:
-    needs: test
-    if: github.ref_name == 'dev'
+  DetermineEnv:
+    needs: Test
     runs-on: ubuntu-latest
-    # environment: ${{ github.ref_name }}
+    if: github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'main' || github.ref_name == 'master'
+    steps:
+      - name: Determine Environment
+        id: determine-env
+        run: |
+          if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
+          then
+            echo "::set-output name=target_environment::${{ github.ref_name }}"
+          elif [ ${{ github.ref_name }} == 'main' ] || [ ${{ github.ref_name }} == 'master' ]
+            echo "::set-output name=target_environment::prod"
+          fi
+    outputs:
+      target_environment: ${{ steps.determine-env.outputs.target_environment }}
+  Deploy:
+    needs: DetermineEnv
+    runs-on: ubuntu-latest
+    environment: ${{ needs.DetermineEnv.target_environment }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.DEV_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
           role-session-name: GASession
           aws-region: ${{ env.AWS_REGION }}
       - name: Install Boto3
@@ -43,61 +61,101 @@ jobs:
           pip install boto3
       - name: Deploy Templates
         run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.DEV_ACCOUNT_NUMBER }}
-  DeployToTest:
-    needs: test
-    if: github.ref_name == 'test'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Install Boto3
-        run: |
-          pip install boto3
-      - name: Deploy Templates
-        run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.TEST_ACCOUNT_NUMBER }}
-  DeployToStaging:
-    needs: test
-    if: github.ref_name == 'staging'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.STAGING_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Install Boto3
-        run: |
-          pip install boto3
-      - name: Deploy Templates
-        run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.STAGING_ACCOUNT_NUMBER }}
-  DeployToProd:
-    needs: test
-    if: github.ref_name == 'main' || github.ref_name == 'master'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Install Boto3
-        run: |
-          pip install boto3
-      - name: Deploy Templates
-        run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.PROD_ACCOUNT_NUMBER }}
+          make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}
+  # DeployToDev:
+  #   needs: test
+  #   if: github.ref_name == 'dev'
+  #   runs-on: ubuntu-latest
+  #   # environment: ${{ github.ref_name }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.DEV_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  #         make deploy ACCOUNT_NUMBER=${{ secrets.DEV_ACCOUNT_NUMBER }}
+  # DeployToDev:
+  #   needs: test
+  #   if: github.ref_name == 'dev'
+  #   runs-on: ubuntu-latest
+  #   # environment: ${{ github.ref_name }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.DEV_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  # #         make deploy ACCOUNT_NUMBER=${{ secrets.DEV_ACCOUNT_NUMBER }}
+  # DeployToTest:
+  #   needs: test
+  #   if: github.ref_name == 'test'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.TEST_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  #         make deploy ACCOUNT_NUMBER=${{ secrets.TEST_ACCOUNT_NUMBER }}
+  # DeployToStaging:
+  #   needs: test
+  #   if: github.ref_name == 'staging'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.STAGING_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  #         make deploy ACCOUNT_NUMBER=${{ secrets.STAGING_ACCOUNT_NUMBER }}
+  # DeployToProd:
+  #   needs: test
+  #   if: github.ref_name == 'main' || github.ref_name == 'master'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.PROD_ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  #         make deploy ACCOUNT_NUMBER=${{ secrets.PROD_ACCOUNT_NUMBER }}
