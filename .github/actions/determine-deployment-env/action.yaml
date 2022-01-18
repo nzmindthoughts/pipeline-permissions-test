@@ -1,22 +1,31 @@
 name: Determine Deployment Environment
 description: >-
-  Determines the target GitHub environment based on the name
-  of the branch that code is pushed to
+  Determines which environment to deploy templates to
+inputs:
+  target_branch:
+    description: Target repo branch for code push
+    required: true
 outputs:
-  target_environment:
-    description: Name of the GitHub environment to use for deployment
-    value: ${{ steps.determine-env.outputs.target_environment }}
+  target_environment_name:
+    description: Name of the environment to deploy templates
+    value: ${{ steps.determine-env.outputs.target_environment_name }}
 runs:
   using: composite
   steps:
     - name: Determine Environment
       id: determine-env
       run: |
-        if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
+        if [ ${{ inputs.target_branch }} == 'dev' ]
         then
-          echo "::set-output name=target_environment::${{ github.ref_name }}"
-        elif [ ${{ github.ref_name }} == 'main' ] || [ ${{ github.ref_name }} == 'master' ]
+          echo "::set-output name=target_environment_name::DEV"
+        elif [ ${{ inputs.target_branch }} == 'test' ]
         then
-          echo "::set-output name=target_environment::prod"
+          echo "::set-output name=target_environment_name::TEST"
+        elif [ ${{ inputs.target_branch }} == 'staging' ]
+        then
+          echo "::set-output name=target_environment_name::STAGING"
+        elif [ ${{ inputs.target_branch }} == 'main' ] || [ ${{ inputs.target_branch }} == 'master' ]
+        then
+          echo "::set-output name=target_environment_name::PROD"
         fi
       shell: bash
