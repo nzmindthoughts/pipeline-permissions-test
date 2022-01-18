@@ -52,7 +52,7 @@ jobs:
     #   ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
     #   AWS_REGION: "us-east-1"
       - name: Call workflow
-        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yaml@dev
+        uses: tsamuel33/custom-runner-test/.github/workflows/test_and_deploy.yaml@dev
         with:
           target_branch: ${{ inputs.target_branch }}
 #   Promote:
