@@ -4,7 +4,6 @@ on:
     paths:
       - 'templates/**.template'
       - 'config/default.json'
-      - '.github/**'
   workflow_call:
     # inputs:
     #   target_branch:
@@ -17,6 +16,7 @@ on:
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
+      deployments: write
 jobs:
   Test:
     runs-on: ubuntu-latest
@@ -37,34 +37,17 @@ jobs:
         uses: ./.github/actions/determine-deployment-env
     outputs:
       target_environment: ${{ steps.determine-env.outputs.target_environment }}
-  DisplayEnv:
+  Deploy:
     needs: DetermineEnv
     runs-on: ubuntu-latest
+    environment: ${{ needs.DetermineEnv.outputs.target_environment }}
     steps:
-      - name: Display Environment
-        run: |
-          echo 'This workflow will deploy to ${{ needs.DetermineEnv.outputs.target_environment }}'
-  # Deploy:
-  #   needs: DetermineEnv
-  #   runs-on: ubuntu-latest
-  #   environment: ${{ needs.DetermineEnv.target_environment }}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v2
-  #     - name: Configure AWS credentials
-  #       uses: aws-actions/configure-aws-credentials@v1
-  #       with:
-  #         role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-  #         role-session-name: GASession
-  #         aws-region: ${{ env.AWS_REGION }}
-  #       env:
-  #         AWS_REGION : "us-east-1"
-  #     - name: Install Boto3
-  #       run: |
-  #         pip install boto3
-  #     - name: Deploy Templates
-  #       run: |
-  #         make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Deploy
+        uses: ./.github/actions/deploy-cloudformation-templates
+        with:
+          ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
   # DeployToDev:
   #   needs: test
   #   if: github.ref_name == 'dev'

@@ -1,0 +1,25 @@
+name: Deploy CloudFormation Templates
+description: Deploys CloudFormation templates to provided AWS account
+inputs:
+  ACCOUNT_NUMBER:
+    description: The AWS account in which the templates will be deployed
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        role-to-assume: arn:aws:iam::$INPUT_ACCOUNT_NUMBER:role/managed/GALocalSecurityPipelineAssumedRole
+        role-session-name: GASession
+        aws-region: ${{ env.AWS_REGION }}
+      env:
+        AWS_REGION : "us-east-1"
+    - name: Install Boto3
+      run: |
+        pip install boto3
+      shell: bash
+    - name: Deploy Templates
+      run: |
+        make deploy ACCOUNT_NUMBER=$INPUT_ACCOUNT_NUMBER
+      shell: bash
