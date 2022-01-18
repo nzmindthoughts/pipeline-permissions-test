@@ -45,11 +45,11 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          role-to-assume: ${{ secrets.ROLE_ARN }}
+          role-to-assume: ${{ env.ROLE_ARN }}
           role-session-name: GASession
           aws-region: ${{ env.AWS_REGION }}
     env:
-      # ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
+      ROLE_ARN: ${{ secrets.ROLE_ARN }}
       AWS_REGION: "us-east-1"
 #   Promote:
 #     runs-on: ubuntu-latest
