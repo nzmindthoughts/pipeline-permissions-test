@@ -14,8 +14,6 @@ on:
     #   target_environment:
     #     description: 'GitHub environment to deploy to'
     #     required: true
-env:
-  AWS_REGION : "us-east-1"
 permissions:
       id-token: write
       contents: read    # This is required for actions/checkout@v2
@@ -56,6 +54,8 @@ jobs:
   #         role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
   #         role-session-name: GASession
   #         aws-region: ${{ env.AWS_REGION }}
+  #       env:
+  #         AWS_REGION : "us-east-1"
   #     - name: Install Boto3
   #       run: |
   #         pip install boto3
