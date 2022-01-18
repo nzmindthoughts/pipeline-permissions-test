@@ -4,6 +4,7 @@ on:
     paths:
       - 'templates/**.template'
       - 'config/default.json'
+      - '.github/actions/**'
   workflow_call:
     # inputs:
     #   target_branch:
@@ -25,43 +26,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Test
-        run: |
-          make test
-  DetermineEnv:
-    needs: Test
-    runs-on: ubuntu-latest
-    if: github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'main' || github.ref_name == 'master'
-    steps:
-      - name: Determine Environment
-        id: determine-env
-        run: |
-          if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
-          then
-            echo "::set-output name=target_environment::${{ github.ref_name }}"
-          elif [ ${{ github.ref_name }} == 'main' ] || [ ${{ github.ref_name }} == 'master' ]
-            echo "::set-output name=target_environment::prod"
-          fi
-    outputs:
-      target_environment: ${{ steps.determine-env.outputs.target_environment }}
-  Deploy:
-    needs: DetermineEnv
-    runs-on: ubuntu-latest
-    environment: ${{ needs.DetermineEnv.target_environment }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Install Boto3
-        run: |
-          pip install boto3
-      - name: Deploy Templates
-        run: |
-          make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}
+        uses: ./.github/actions/test-cloudformation-templates
+      # - name: Test
+      #   run: |
+      #     make test
+  # DetermineEnv:
+  #   needs: Test
+  #   runs-on: ubuntu-latest
+  #   if: github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'main' || github.ref_name == 'master'
+  #   steps:
+  #     - name: Determine Environment
+  #       id: determine-env
+  #       run: |
+  #         if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
+  #         then
+  #           echo "::set-output name=target_environment::${{ github.ref_name }}"
+  #         elif [ ${{ github.ref_name }} == 'main' ] || [ ${{ github.ref_name }} == 'master' ]
+  #           echo "::set-output name=target_environment::prod"
+  #         fi
+  #   outputs:
+  #     target_environment: ${{ steps.determine-env.outputs.target_environment }}
+  # Deploy:
+  #   needs: DetermineEnv
+  #   runs-on: ubuntu-latest
+  #   environment: ${{ needs.DetermineEnv.target_environment }}
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v1
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+  #         role-session-name: GASession
+  #         aws-region: ${{ env.AWS_REGION }}
+  #     - name: Install Boto3
+  #       run: |
+  #         pip install boto3
+  #     - name: Deploy Templates
+  #       run: |
+  #         make deploy ACCOUNT_NUMBER=${{ secrets.ACCOUNT_NUMBER }}
   # DeployToDev:
   #   needs: test
   #   if: github.ref_name == 'dev'
