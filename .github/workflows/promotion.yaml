@@ -78,7 +78,8 @@ jobs:
       #     gh pr merge $PULL_REQ_NUMBER -m --admin
       #   env:
       #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Promote
-        # the uses field does not allow expressions so it must be hardcoded
-        uses: .github/workflows/test_and_deploy.yml@$dev
+  Deploy:
+      # - name: Promote
+      #   # the uses field does not allow expressions so it must be hardcoded
+    uses: .github/workflows/test_and_deploy.yml@$dev
 
