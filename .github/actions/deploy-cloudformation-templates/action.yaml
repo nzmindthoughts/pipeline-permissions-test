@@ -1,7 +1,7 @@
 name: Deploy CloudFormation Templates
 description: Deploys CloudFormation templates to provided AWS account
 inputs:
-  ACCOUNT_NUMBER:
+  account-number:
     description: The AWS account in which the templates will be deployed
     required: true
 runs:
@@ -10,7 +10,7 @@ runs:
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
-        role-to-assume: arn:aws:iam::$INPUT_ACCOUNT_NUMBER:role/managed/GALocalSecurityPipelineAssumedRole
+        role-to-assume: arn:aws:iam::${{ inputs.account-number }}:role/managed/GALocalSecurityPipelineAssumedRole
         role-session-name: GASession
         aws-region: ${{ env.AWS_REGION }}
       env:
@@ -21,5 +21,5 @@ runs:
       shell: bash
     - name: Deploy Templates
       run: |
-        make deploy ACCOUNT_NUMBER=$INPUT_ACCOUNT_NUMBER
+        make deploy ACCOUNT_NUMBER=${{ inputs.account-number }}
       shell: bash

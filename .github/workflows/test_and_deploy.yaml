@@ -47,7 +47,7 @@ jobs:
       - name: Deploy
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
-          ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
+          account-number: ${{ secrets.ACCOUNT_NUMBER }}
   # DeployToDev:
   #   needs: test
   #   if: github.ref_name == 'dev'
