@@ -4,7 +4,7 @@ on:
     paths:
       - 'templates/**.template'
       - 'config/default.json'
-      - '.github/actions/determine*'
+      - '.github/actions/determine**'
   workflow_call:
     inputs:
       target_branch:
