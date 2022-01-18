@@ -11,15 +11,15 @@ on:
 #           - dev
 #           - test
 #           - staging
-#       target_branch:
-#         type: choice
-#         description: 'Branch to promote code TO'
-#         required: true
-#         options:
-#           - test
-#           - staging
-#           - main
-#           - master
+      target_branch:
+        type: choice
+        description: 'Branch to promote code TO'
+        required: true
+        options:
+          - test
+          - staging
+          - main
+          - master
 #       force_merge:
 #         type: choice
 #         description: 'Ignore branch settings and merge without review'
@@ -35,22 +35,26 @@ permissions:
       contents: write    # This is required for actions/checkout@v2
       pull-requests: write
       # actions:
-      deployments: write
+      # deployments: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     environment: dev
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+    #   - name: Configure AWS credentials
+    #     uses: aws-actions/configure-aws-credentials@v1
+    #     with:
+    #       role-to-assume: arn:aws:iam::${{ env.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
+    #       role-session-name: GASession
+    #       aws-region: ${{ env.AWS_REGION }}
+    # env:
+    #   ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
+    #   AWS_REGION: "us-east-1"
+      - name: Call workflow
+        uses: ${{ github.repository }}/.github/workflows/test_and_deploy.yaml@dev
         with:
-          role-to-assume: arn:aws:iam::${{ env.ACCOUNT_NUMBER }}:role/managed/GALocalSecurityPipelineAssumedRole
-          role-session-name: GASession
-          aws-region: ${{ env.AWS_REGION }}
-    env:
-      ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
-      AWS_REGION: "us-east-1"
+          target_branch: ${{ inputs.target_branch }}
 #   Promote:
 #     runs-on: ubuntu-latest
 #     # environment: ${{ github.event.inputs.target_branch }}
