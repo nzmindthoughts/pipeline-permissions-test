@@ -81,5 +81,5 @@ jobs:
   Deploy:
       # - name: Promote
       #   # the uses field does not allow expressions so it must be hardcoded
-    uses: .github/workflows/test_and_deploy.yml@$dev
+    uses: ./.github/workflows/test_and_deploy.yml@$dev
 
