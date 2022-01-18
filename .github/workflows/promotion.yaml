@@ -81,7 +81,7 @@ jobs:
       - name: testing
         run: |
           pwd
-          ls
+          ls ./.github/actions
       # - name: Promote
       #   # the uses field does not allow expressions so it must be hardcoded
       #   uses: ./.github/workflows/test_and_deploy.yml@$dev
