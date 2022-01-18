@@ -1,7 +1,7 @@
 name: Code promotion pipeline
 on:
   workflow_dispatch:
-#     inputs:
+    inputs:
 #       source_branch:
 #         type: choice
 #         description: 'Branch to promote code FROM'
