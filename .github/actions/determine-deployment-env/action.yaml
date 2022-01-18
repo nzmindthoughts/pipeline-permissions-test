@@ -10,6 +10,7 @@ runs:
   using: composite
   steps:
     - name: Determine Environment
+      id: determine-env
       run: |
         if [ ${{ github.ref_name }} == 'dev' ] || [ ${{ github.ref_name }} == 'test' ] || [ ${{ github.ref_name }} == 'staging' ]
         then
