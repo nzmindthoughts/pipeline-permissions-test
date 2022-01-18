@@ -42,10 +42,10 @@ jobs:
     runs-on: ubuntu-latest
     # environment: ${{ github.event.inputs.target_branch }}
     steps:
-      # - name: Checkout
-      #   uses: actions/checkout@v2
-      #   with:
-      #     ref: ${{ github.event.inputs.source_branch }}
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.source_branch }}
       # - name: Look for existing open PR
       #   run: |
       #     pullreqnumber="$(gh pr status --json number,baseRefName,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.state == "OPEN")) | .number')"
