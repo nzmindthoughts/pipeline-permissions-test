@@ -15,6 +15,7 @@ runs:
         then
           echo "::set-output name=target_environment::${{ github.ref_name }}"
         elif [ ${{ github.ref_name }} == 'main' || 'master' ]
+        then
           echo "::set-output name=target_environment::prod"
         fi
-      shell: sh
+      shell: bash
