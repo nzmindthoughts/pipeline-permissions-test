@@ -1,6 +1,6 @@
-# name: Code promotion pipeline
-# on:
-#   workflow_dispatch:
+name: Code promotion pipeline
+on:
+  workflow_dispatch:
 #     inputs:
 #       source_branch:
 #         type: choice
@@ -30,14 +30,21 @@
 #         default: 'true'
 # env:
 #   AWS_REGION : "us-east-1"
-# permissions:
-#       id-token: write
-#       contents: write    # This is required for actions/checkout@v2
-#       pull-requests: write
-#       # actions:
-#       # deployments: write
+permissions:
+      id-token: write
+      contents: write    # This is required for actions/checkout@v2
+      pull-requests: write
+      # actions:
+      # deployments: write
 
-# jobs:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - name: Echo placeholder secret
+        run: |
+          echo ${{ secrets.PLACEHOLDER }}
 #   Promote:
 #     runs-on: ubuntu-latest
 #     # environment: ${{ github.event.inputs.target_branch }}
