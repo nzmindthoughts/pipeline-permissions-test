@@ -31,10 +31,12 @@ Resources:
       Path: /managed/
       RoleName: GitHubActionsS3ListRole
       Tags:
-        - Key: Org4
+        - Key: Org
           Value: !Ref OrgId
         - Key: AppCode
           Value: !Ref AppId
+        - Key: GitHubActionStatus
+          Value: Success
         - Key: "secops:tags:managed_by"
           Value: "AWS Managed Security Pipeline"
   GitHubActionsS3ListPolicy:
