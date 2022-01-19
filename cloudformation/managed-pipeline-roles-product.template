@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Creates an AWS Service Catalog product and portfolio to create the 
+  roles necessary for GitHub Actions to use the Managed Security Pipeline
+
+Parameters:
+  ManagedPipelineSharedFilesBucketName:
+    Type: String
+    Default: cf-templates-1n3xya88n81lj-us-east-1
+  ManagedPipelineProductTemplateFileName:
+    Type: String
+    Default: github-actions-local-security-roles.template
+
+Resources:
+  ManagedPipelinePortfolio:
+    Type: AWS::ServiceCatalog::Portfolio
+    Properties:
+      Description: Creates roles required for Managed Security Pipeline
+      DisplayName: Centrally Managed Infrastructure Security Components Portfolio
+      ProviderName: InfoSec
+
+  ManagedPipelinePortfolioPrincipal:
+    Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
+    Properties:
+      PortfolioId: !Ref ManagedPipelinePortfolio
+      # PrincipalARN: !Sub "arn:aws:iam::${AWS::AccountId}:role/Administrator"
+      PrincipalARN: !Sub "arn:aws:iam::${AWS::AccountId}:group/Admin"
+      PrincipalType: IAM
+
+  ManagedPipelineProduct:
+    Type: AWS::ServiceCatalog::CloudFormationProduct
+    Properties:
+      Description: Manages infrastucture security components
+      Distributor: TSamuel33
+      Name: Centrally Managed Infrastructure Security Components
+      Owner: InfoSec
+      ProvisioningArtifactParameters:
+        - Description: Initial pipeline roles deployment
+          DisableTemplateValidation: false
+          Info:
+            LoadTemplateFromURL: !Sub "https://${ManagedPipelineSharedFilesBucketName}.s3.amazonaws.com/${ManagedPipelineProductTemplateFileName}"
+          Name: v1
+      SupportDescription: InfoSec
+      SupportEmail: infosec@tsamuel33.net
+
+  ManagedPipelinePortfolioProductAssoc:
+    Type: AWS::ServiceCatalog::PortfolioProductAssociation
+    Properties:
+      PortfolioId: !Ref ManagedPipelinePortfolio
+      ProductId: !Ref ManagedPipelineProduct
