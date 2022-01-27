@@ -13,12 +13,18 @@ import argparse
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s@%(lineno)d: %(message)s')
 logger = logging.getLogger(os.path.basename(__file__))
 
+parser = argparse.ArgumentParser(description='Accept AWS account number')
+parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
+parser.add_argument('--aws_environment', type=str, help='Environment of AWS account in which templates will be deployed', required=True)
+args = vars(parser.parse_args())
+
+ENVIRONMENT_NAME = args['aws_environment']
 DEPLOY_DIR = Path(__file__).parents[0]
 ROOT_DIR = Path(DEPLOY_DIR).parents[0]
 TEMPLATE_DIR = ROOT_DIR / 'templates'
 # PARAMETER_DIR = ROOT_DIR / 'parameters'
 CONFIG_DIR = ROOT_DIR / 'config'
-CONFIG_FILE_NAME = 'default.json'
+CONFIG_FILE_NAME = 'default.'+ENVIRONMENT_NAME+'.json'
 STACK_PREFIX = 'managed-security-pipeline'
 STACK_EXECUTION_ROLE_NAME = 'GALocalSecurityPipelineStackExecutionRole'
 SUCCESS_STATUSES = [
@@ -43,10 +49,6 @@ TIMEOUT_SECONDS = 900
 
 client = boto3.client('cloudformation')
 s3client = boto3.client('s3')
-
-parser = argparse.ArgumentParser(description='Accept AWS account number')
-parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
-args = vars(parser.parse_args())
 
 def get_json_attribute(file,attributename):
     with open(file, 'r') as myfile:

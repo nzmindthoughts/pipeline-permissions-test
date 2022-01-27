@@ -2,8 +2,8 @@ name: Test and Deploy CloudFormation Templates
 on:
   push:
     paths:
-      - 'templates/**.template'
-      - 'config/default.json'
+      - 'templates/*.template'
+      - 'config/default.*.json'
 permissions:
       id-token: write
       contents: read
@@ -27,18 +27,22 @@ jobs:
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.DEV_ACCOUNT_NUMBER }}
+          environment-name: 'dev'
       - name: Deploy to Test
         if: github.ref_name == 'test'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.TEST_ACCOUNT_NUMBER }}
+          environment-name: 'test'
       - name: Deploy to Staging
         if: github.ref_name == 'staging'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.STAGING_ACCOUNT_NUMBER }}
+          environment-name: 'staging'
       - name: Deploy to Prod
         if: github.ref_name == 'main'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.PROD_ACCOUNT_NUMBER }}
+          environment-name: 'prod'
