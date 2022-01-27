@@ -117,10 +117,20 @@ def upload_template(template,bucket,filename):
     s3client.put_object(Body=template,Bucket=bucket,Key=filename)
 
 
-def create_stack(stackname,parameters,capability,accountid,templatestring=None,templateurl=None):
+def create_stack(stackname,parameters,capability,accountid,templatestring):
     stackcreateresponse = client.create_stack(
         StackName=stackname,
         TemplateBody=templatestring,
+        Parameters=parameters,
+        Capabilities=[capability],
+        RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
+        OnFailure='DELETE'
+    )
+    return stackcreateresponse
+
+def create_stack_s3(stackname,parameters,capability,accountid,templateurl):
+    stackcreateresponse = client.create_stack(
+        StackName=stackname,
         TemplateURL=templateurl,
         Parameters=parameters,
         Capabilities=[capability],
@@ -129,10 +139,20 @@ def create_stack(stackname,parameters,capability,accountid,templatestring=None,t
     )
     return stackcreateresponse
 
-def update_stack(stackname,parameters,capability,accountid,templatestring=None,templateurl=None):
+def update_stack(stackname,parameters,capability,accountid,templatestring):
     stackupdateresponse = client.update_stack(
         StackName=stackname,
         TemplateBody=templatestring,
+        Parameters=parameters,
+        Capabilities=[capability],
+        RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
+        DisableRollback=False
+    )
+    return stackupdateresponse
+
+def update_stack_s3(stackname,parameters,capability,accountid,templateurl):
+    stackupdateresponse = client.update_stack(
+        StackName=stackname,
         TemplateURL=templateurl,
         Parameters=parameters,
         Capabilities=[capability],
@@ -182,9 +202,9 @@ def main():
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
                 upload_template(templatelocation,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
-                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,templateurl=s3objectlocation)
+                createtemplateresponse = create_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
-                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,templatestring=cf_template_yaml)
+                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,cf_template_yaml)
             logger.info('Creation of stack: %s in progress...' % createtemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             raise error
@@ -220,9 +240,9 @@ def main():
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
                 upload_template(templatelocation,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
-                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,templateurl=s3objectlocation)
+                updatetemplateresponse = update_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
-                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,templatestring=cf_template_yaml)
+                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,cf_template_yaml)
             logger.info('Update of stack: %s in progress...' % updatetemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'ValidationError' and error.response['Error']['Message'] == 'No updates are to be performed.':
