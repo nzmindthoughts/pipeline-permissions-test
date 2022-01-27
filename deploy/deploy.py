@@ -42,7 +42,7 @@ TIMEOUT_SECONDS = 900
 
 
 client = boto3.client('cloudformation')
-stsclient = boto3.client('sts')
+s3client = boto3.client('s3')
 
 parser = argparse.ArgumentParser(description='Accept AWS account number')
 parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
@@ -100,10 +100,28 @@ def get_stack(stackname):
     status = response['Stacks'][0]['StackStatus']
     return status
 
-def create_stack(stackname,templatestring,parameters,capability,accountid):
+def get_cf_bucket():
+    bucketlist = s3client.list_buckets()
+    buckets = bucketlist['Buckets']
+    # bucket = ''
+    for b in buckets:
+        if b['Name'].startswith('cf-templates-') and b['Name'].endswith('us-east-1'):
+            bucket = b['Name']
+    return bucket
+
+def get_file_size(file):
+    size = file.stat().st_size
+    return size
+
+def upload_template(template,bucket,filename):
+    s3client.put_object(Body=template,Bucket=bucket,Key=filename)
+
+
+def create_stack(stackname,parameters,capability,accountid,templatestring=None,templateurl=None):
     stackcreateresponse = client.create_stack(
         StackName=stackname,
         TemplateBody=templatestring,
+        TemplateURL=templateurl,
         Parameters=parameters,
         Capabilities=[capability],
         RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
@@ -111,10 +129,11 @@ def create_stack(stackname,templatestring,parameters,capability,accountid):
     )
     return stackcreateresponse
 
-def update_stack(stackname,templatestring,parameters,capability,accountid):
+def update_stack(stackname,parameters,capability,accountid,templatestring=None,templateurl=None):
     stackupdateresponse = client.update_stack(
         StackName=stackname,
         TemplateBody=templatestring,
+        TemplateURL=templateurl,
         Parameters=parameters,
         Capabilities=[capability],
         RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
@@ -124,6 +143,7 @@ def update_stack(stackname,templatestring,parameters,capability,accountid):
     
 def main():
     accountnumber = args['account_number']
+    cf_bucket = get_cf_bucket()
     appid = get_json_attribute(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME, 'AppId')
     parameter_list = create_parameter_list(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME)
     logger.info('Getting CloudFormation templates')
@@ -155,8 +175,15 @@ def main():
         templatecapability = 'CAPABILITY_NAMED_IAM'
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
-        try:     
-            createtemplateresponse = create_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
+        try:
+            size = get_file_size(templatelocation)
+            if size > 1600:
+                logger.info('%s file size is larger than quota. Uploading to %s' % templatename,cf_bucket)
+                upload_template(templatelocation,cf_bucket,templatename)
+                s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
+                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,templateurl=s3objectlocation)
+            else:
+                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,templatestring=cf_template_yaml)
             logger.info('Creation of stack: %s in progress...' % createtemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             raise error
@@ -185,8 +212,15 @@ def main():
         templatecapability = 'CAPABILITY_NAMED_IAM'
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
-        try:     
-            updatetemplateresponse = update_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
+        try:
+            size = get_file_size(templatelocation)
+            if size > 1600:
+                logger.info('%s file size is larger than quota. Uploading to %s' % templatename,cf_bucket)
+                upload_template(templatelocation,cf_bucket,templatename)
+                s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
+                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,templateurl=s3objectlocation)
+            else:
+                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,templatestring=cf_template_yaml)
             logger.info('Update of stack: %s in progress...' % updatetemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'ValidationError' and error.response['Error']['Message'] == 'No updates are to be performed.':
@@ -214,4 +248,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
