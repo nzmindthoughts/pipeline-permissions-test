@@ -200,7 +200,7 @@ def main():
             size = get_file_size(templatefile)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
-                upload_template(templatelocation,cf_bucket,templatename)
+                upload_template(templatefile,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
                 createtemplateresponse = create_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
@@ -238,7 +238,7 @@ def main():
             size = get_file_size(templatefile)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
-                upload_template(templatelocation,cf_bucket,templatename)
+                upload_template(templatefile,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
                 updatetemplateresponse = update_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
