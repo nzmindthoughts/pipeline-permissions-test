@@ -176,9 +176,8 @@ def main():
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:
-            with open(templatelocation, 'r') as myfile:
-                templatedata = myfile.read()
-            size = get_file_size(templatedata)
+            templatefile = Path(templatelocation)
+            size = get_file_size(templatefile)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % templatename,cf_bucket)
                 upload_template(templatelocation,cf_bucket,templatename)
@@ -215,7 +214,8 @@ def main():
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:
-            size = get_file_size(TEMPLATE_DIR.glob(templatename))
+            templatefile = Path(templatelocation)
+            size = get_file_size(templatefile)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % templatename,cf_bucket)
                 upload_template(templatelocation,cf_bucket,templatename)
