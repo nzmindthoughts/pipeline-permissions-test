@@ -198,7 +198,7 @@ def main():
         try:
             templatefileposix = Path(templatelocation)
             size = get_file_size(templatefileposix)
-            if size > 1600:
+            if size > 51200:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
                 upload_template(cf_template_yaml,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
@@ -236,7 +236,7 @@ def main():
         try:
             templatefileposix = Path(templatelocation)
             size = get_file_size(templatefileposix)
-            if size > 1600:
+            if size > 51200:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
                 upload_template(cf_template_yaml,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
