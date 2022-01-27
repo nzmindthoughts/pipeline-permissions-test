@@ -196,11 +196,11 @@ def main():
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:
-            templatefile = Path(templatelocation)
-            size = get_file_size(templatefile)
+            templatefileposix = Path(templatelocation)
+            size = get_file_size(templatefileposix)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
-                upload_template(templatefile,cf_bucket,templatename)
+                upload_template(cf_template_yaml,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
                 createtemplateresponse = create_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
@@ -234,11 +234,11 @@ def main():
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
         try:
-            templatefile = Path(templatelocation)
-            size = get_file_size(templatefile)
+            templatefileposix = Path(templatelocation)
+            size = get_file_size(templatefileposix)
             if size > 1600:
                 logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
-                upload_template(templatefile,cf_bucket,templatename)
+                upload_template(cf_template_yaml,cf_bucket,templatename)
                 s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
                 updatetemplateresponse = update_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
             else:
