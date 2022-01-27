@@ -61,14 +61,20 @@ Resources:
                   - cloudformation:ExecuteChangeSet
                   - cloudformation:SetStackPolicy
                   - cloudformation:ValidateTemplate
-                Resource:
-                  - !Sub "arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/managed-security-pipeline-*/*"
-                  - !Sub "arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/managed-security-pipeline-*/*"
+                Resource: !Sub "arn:${AWS::Partition}:cloudformation:*:${AWS::AccountId}:stack/managed-security-pipeline-*/*"
+              - Effect: Allow
+                Action: iam:PassRole
+                Resource: !GetAtt GALocalSecurityPipelineStackExecutionRole.Arn
+              - Effect: Allow
+                Action: s3:ListAllMyBuckets
+                Resource: '*'
               - Effect: Allow
                 Action:
-                  - iam:PassRole
+                  - s3:ListBucket
+                  - s3:PutObject
                 Resource:
-                  - !GetAtt GALocalSecurityPipelineStackExecutionRole.Arn
+                  - "arn:aws:s3:::cf-templates*"
+                  - "arn:aws:s3:::cf-templates*/*"
   GALocalSecurityPipelineStackExecutionRole:
     Type: AWS::IAM::Role
     Properties: 
