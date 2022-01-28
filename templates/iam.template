@@ -39,8 +39,8 @@ Resources:
           Value: Success
         - Key: "secops:tags:managed_by"
           Value: "AWS Managed Security Pipeline"
-        - Key: SeenBy
-          Value: InfoSec3
+        - Key: DeployDateTime
+          Value: Jan282022_1617
   GitHubActionsS3ListPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:

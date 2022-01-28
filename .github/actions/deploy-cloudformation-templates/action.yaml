@@ -4,6 +4,9 @@ inputs:
   account-number:
     description: The AWS account in which the templates will be deployed
     required: true
+  environment-name:
+    description: Name of the AWS environment in which the templates will be deployed
+    required: true
 runs:
   using: composite
   steps:
@@ -21,5 +24,5 @@ runs:
       shell: bash
     - name: Deploy Templates
       run: |
-        make deploy ACCOUNT_NUMBER=${{ inputs.account-number }}
+        make deploy ACCOUNT_NUMBER=${{ inputs.account-number }} ENVIRONMENT_NAME=${{ inputs.environment-name }}
       shell: bash

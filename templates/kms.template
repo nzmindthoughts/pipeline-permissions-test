@@ -20,6 +20,7 @@ Parameters:
 Conditions:
   isDev: !Equals [!Ref 'AppEnvironment', 'dev']
   isTest: !Equals [!Ref 'AppEnvironment', 'test']
+  isStaging: !Equals [!Ref 'AppEnvironment', 'staging']
   isProd: !Equals [!Ref 'AppEnvironment', 'prod']
 
 Mappings:
