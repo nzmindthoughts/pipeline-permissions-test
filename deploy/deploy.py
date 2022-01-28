@@ -219,6 +219,7 @@ def main():
                 active = False
             elif stackstatus in FAILURE_STATUSES:
                 logger.error('Failed to create stack: %s' % createtemplateresponse['StackId'])
+                sys.exit("Stack creation failure")
                 active = False
             else:
                 count +=1
@@ -226,6 +227,7 @@ def main():
                     logger.info('Creation of stack: %s still in progress...' % createtemplateresponse['StackId'])
                 elif count >= max_count:
                     logger.error('Creation of stack: %s timed out.' % createtemplateresponse['StackId'])
+                    sys.exit("Stack creation timeout")
     for update in update_list:
         active = True
         count = 1
@@ -261,6 +263,7 @@ def main():
                 active = False
             elif stackstatus in FAILURE_STATUSES:
                 logger.error('Failed to update stack: %s' % updatetemplateresponse['StackId'])
+                sys.exit("Stack update failure")
                 active = False
             else:
                 count +=1
@@ -268,6 +271,7 @@ def main():
                     logger.info('Update of stack: %s still in progress...' % updatetemplateresponse['StackId'])
                 elif count >= max_count:
                     logger.error('Update of stack: %s timed out.' % updatetemplateresponse['StackId'])
+                    sys.exit("Stack update timeout")
                 
 
 if __name__ == "__main__":
