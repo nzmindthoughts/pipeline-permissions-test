@@ -2,8 +2,8 @@ name: Test and Deploy CloudFormation Templates
 on:
   push:
     paths:
-      - 'templates/**.template'
-      - 'config/default.json'
+      - 'templates/*.template'
+      - 'config/default.*.json'
 permissions:
       id-token: write
       contents: read
@@ -15,43 +15,34 @@ jobs:
         uses: actions/checkout@v2
       - name: Test
         uses: ./.github/actions/test-cloudformation-templates
-  DetermineEnv:
-    needs: Test
-    runs-on: ubuntu-latest
-    if: github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'main' || github.ref_name == 'master'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Determine Environment
-        id: determine-env
-        uses: ./.github/actions/determine-deployment-env
-        with:
-          target_branch: ${{ github.ref_name }}
-    outputs:
-      target_environment_name: ${{ steps.determine-env.outputs.target_environment_name }}
   Deploy:
-    needs: DetermineEnv
+    needs: Test
+    if: github.ref_name == 'dev' || github.ref_name == 'test' || github.ref_name == 'staging' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Deploy to Dev
-        if: needs.DetermineEnv.outputs.target_environment_name == 'DEV'
+        if: github.ref_name == 'dev'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.DEV_ACCOUNT_NUMBER }}
+          environment-name: 'dev'
       - name: Deploy to Test
-        if: needs.DetermineEnv.outputs.target_environment_name == 'TEST'
+        if: github.ref_name == 'test'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.TEST_ACCOUNT_NUMBER }}
+          environment-name: 'test'
       - name: Deploy to Staging
-        if: needs.DetermineEnv.outputs.target_environment_name == 'STAGING'
+        if: github.ref_name == 'staging'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.STAGING_ACCOUNT_NUMBER }}
+          environment-name: 'staging'
       - name: Deploy to Prod
-        if: needs.DetermineEnv.outputs.target_environment_name == 'PROD'
+        if: github.ref_name == 'main'
         uses: ./.github/actions/deploy-cloudformation-templates
         with:
           account-number: ${{ secrets.PROD_ACCOUNT_NUMBER }}
+          environment-name: 'prod'

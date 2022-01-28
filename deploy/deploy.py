@@ -13,12 +13,18 @@ import argparse
 logging.basicConfig(stream=sys.stderr, level=logging.INFO, format='[%(asctime)s] %(levelname)s %(name)s@%(lineno)d: %(message)s')
 logger = logging.getLogger(os.path.basename(__file__))
 
+parser = argparse.ArgumentParser(description='Accept AWS account number')
+parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
+parser.add_argument('--aws_environment', type=str, help='Environment of AWS account in which templates will be deployed', required=True)
+args = vars(parser.parse_args())
+
+ENVIRONMENT_NAME = args['aws_environment']
 DEPLOY_DIR = Path(__file__).parents[0]
 ROOT_DIR = Path(DEPLOY_DIR).parents[0]
 TEMPLATE_DIR = ROOT_DIR / 'templates'
 # PARAMETER_DIR = ROOT_DIR / 'parameters'
 CONFIG_DIR = ROOT_DIR / 'config'
-CONFIG_FILE_NAME = 'default.json'
+CONFIG_FILE_NAME = 'default.'+ENVIRONMENT_NAME+'.json'
 STACK_PREFIX = 'managed-security-pipeline'
 STACK_EXECUTION_ROLE_NAME = 'GALocalSecurityPipelineStackExecutionRole'
 SUCCESS_STATUSES = [
@@ -42,11 +48,7 @@ TIMEOUT_SECONDS = 900
 
 
 client = boto3.client('cloudformation')
-stsclient = boto3.client('sts')
-
-parser = argparse.ArgumentParser(description='Accept AWS account number')
-parser.add_argument('--account_number', type=str, help='AWS account in which templates will be deployed', required=True)
-args = vars(parser.parse_args())
+s3client = boto3.client('s3')
 
 def get_json_attribute(file,attributename):
     with open(file, 'r') as myfile:
@@ -100,7 +102,24 @@ def get_stack(stackname):
     status = response['Stacks'][0]['StackStatus']
     return status
 
-def create_stack(stackname,templatestring,parameters,capability,accountid):
+def get_cf_bucket():
+    bucketlist = s3client.list_buckets()
+    buckets = bucketlist['Buckets']
+    # bucket = ''
+    for b in buckets:
+        if b['Name'].startswith('cf-templates-') and b['Name'].endswith('us-east-1'):
+            bucket = b['Name']
+    return bucket
+
+def get_file_size(file):
+    size = file.stat().st_size
+    return size
+
+def upload_template(template,bucket,filename):
+    s3client.put_object(Body=template,Bucket=bucket,Key=filename)
+
+
+def create_stack(stackname,parameters,capability,accountid,templatestring):
     stackcreateresponse = client.create_stack(
         StackName=stackname,
         TemplateBody=templatestring,
@@ -111,7 +130,18 @@ def create_stack(stackname,templatestring,parameters,capability,accountid):
     )
     return stackcreateresponse
 
-def update_stack(stackname,templatestring,parameters,capability,accountid):
+def create_stack_s3(stackname,parameters,capability,accountid,templateurl):
+    stackcreateresponse = client.create_stack(
+        StackName=stackname,
+        TemplateURL=templateurl,
+        Parameters=parameters,
+        Capabilities=[capability],
+        RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
+        OnFailure='DELETE'
+    )
+    return stackcreateresponse
+
+def update_stack(stackname,parameters,capability,accountid,templatestring):
     stackupdateresponse = client.update_stack(
         StackName=stackname,
         TemplateBody=templatestring,
@@ -121,9 +151,21 @@ def update_stack(stackname,templatestring,parameters,capability,accountid):
         DisableRollback=False
     )
     return stackupdateresponse
+
+def update_stack_s3(stackname,parameters,capability,accountid,templateurl):
+    stackupdateresponse = client.update_stack(
+        StackName=stackname,
+        TemplateURL=templateurl,
+        Parameters=parameters,
+        Capabilities=[capability],
+        RoleARN='arn:aws:iam::'+accountid+':role/managed/'+STACK_EXECUTION_ROLE_NAME,
+        DisableRollback=False
+    )
+    return stackupdateresponse
     
 def main():
     accountnumber = args['account_number']
+    cf_bucket = get_cf_bucket()
     appid = get_json_attribute(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME, 'AppId')
     parameter_list = create_parameter_list(str(CONFIG_DIR)+'/'+CONFIG_FILE_NAME)
     logger.info('Getting CloudFormation templates')
@@ -155,8 +197,16 @@ def main():
         templatecapability = 'CAPABILITY_NAMED_IAM'
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
-        try:     
-            createtemplateresponse = create_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
+        try:
+            templatefileposix = Path(templatelocation)
+            size = get_file_size(templatefileposix)
+            if size > 51200:
+                logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
+                upload_template(cf_template_yaml,cf_bucket,templatename)
+                s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
+                createtemplateresponse = create_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
+            else:
+                createtemplateresponse = create_stack(stackname,parameter_list,templatecapability,accountnumber,cf_template_yaml)
             logger.info('Creation of stack: %s in progress...' % createtemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             raise error
@@ -169,6 +219,7 @@ def main():
                 active = False
             elif stackstatus in FAILURE_STATUSES:
                 logger.error('Failed to create stack: %s' % createtemplateresponse['StackId'])
+                sys.exit("Stack creation failure")
                 active = False
             else:
                 count +=1
@@ -176,6 +227,7 @@ def main():
                     logger.info('Creation of stack: %s still in progress...' % createtemplateresponse['StackId'])
                 elif count >= max_count:
                     logger.error('Creation of stack: %s timed out.' % createtemplateresponse['StackId'])
+                    sys.exit("Stack creation timeout")
     for update in update_list:
         active = True
         count = 1
@@ -185,8 +237,16 @@ def main():
         templatecapability = 'CAPABILITY_NAMED_IAM'
         templatelocation = str(TEMPLATE_DIR) + '/' + templatename
         cf_template_yaml = load_template(templatelocation)
-        try:     
-            updatetemplateresponse = update_stack(stackname,cf_template_yaml,parameter_list,templatecapability,accountnumber)
+        try:
+            templatefileposix = Path(templatelocation)
+            size = get_file_size(templatefileposix)
+            if size > 51200:
+                logger.info('%s file size is larger than quota. Uploading to %s' % (templatename, cf_bucket))
+                upload_template(cf_template_yaml,cf_bucket,templatename)
+                s3objectlocation = 'https://'+cf_bucket+'.s3.amazonaws.com/'+templatename
+                updatetemplateresponse = update_stack_s3(stackname,parameter_list,templatecapability,accountnumber,s3objectlocation)
+            else:
+                updatetemplateresponse = update_stack(stackname,parameter_list,templatecapability,accountnumber,cf_template_yaml)
             logger.info('Update of stack: %s in progress...' % updatetemplateresponse['StackId'])
         except botocore.exceptions.ClientError as error:
             if error.response['Error']['Code'] == 'ValidationError' and error.response['Error']['Message'] == 'No updates are to be performed.':
@@ -203,6 +263,7 @@ def main():
                 active = False
             elif stackstatus in FAILURE_STATUSES:
                 logger.error('Failed to update stack: %s' % updatetemplateresponse['StackId'])
+                sys.exit("Stack update failure")
                 active = False
             else:
                 count +=1
@@ -210,8 +271,8 @@ def main():
                     logger.info('Update of stack: %s still in progress...' % updatetemplateresponse['StackId'])
                 elif count >= max_count:
                     logger.error('Update of stack: %s timed out.' % updatetemplateresponse['StackId'])
+                    sys.exit("Stack update timeout")
                 
 
 if __name__ == "__main__":
     main()
-    
