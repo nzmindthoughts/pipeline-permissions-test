@@ -269,6 +269,7 @@ class ReadinessTestCase(BasicTestCase):
                 'README.md',
                 'README.pdf',
                 'README.j2',
+                'CODEOWNERS',
                 'Makefile',
                 'service-catalog-item.template',
                 'service-catalog.template',
