@@ -1,4 +1,4 @@
-name: Code promotion pipeline
+name: Code Promotion Request
 on:
   workflow_dispatch:
     inputs:
@@ -26,7 +26,7 @@ permissions:
       pull-requests: write
 
 jobs:        
-  PromoteCode:
+  RequestCodePromote:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,52 +43,51 @@ jobs:
         id: create-pr
         if: env.PULL_REQ_NUMBER == ''
         run: |
-          gh pr create --base ${{ github.event.inputs.target_branch }} --head ${{ github.event.inputs.source_branch }} --title 'Promotion Pipeline: ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}'  --body "Promoting code from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}. Pipeline initiated by ${{ github.actor }}"
-          sleep 30s
+          gh pr create --base ${{ github.event.inputs.target_branch }} --head ${{ github.event.inputs.source_branch }} --title 'Promotion Pipeline: ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}'  --body "Promoting code from ${{ github.event.inputs.source_branch }} to ${{ github.event.inputs.target_branch }}. Request initiated by ${{ github.actor }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Get PR number
-        run: |
-          pullreqnumber="$(gh pr status --json number,baseRefName,mergeable,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
-          echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Merge PR with review
-        run: |
-          gh pr merge $PULL_REQ_NUMBER -m --auto
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Get PR number
+      #   run: |
+      #     pullreqnumber="$(gh pr status --json number,baseRefName,mergeable,state -q '.currentBranch | select((.baseRefName == "${{ github.event.inputs.target_branch }}") and (.mergeable == "MERGEABLE") and (.state == "OPEN")) | .number')"
+      #     echo 'PULL_REQ_NUMBER='$pullreqnumber >> $GITHUB_ENV
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Merge PR with review
+      #   run: |
+      #     gh pr merge $PULL_REQ_NUMBER -m --auto
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  Test:
-    needs: PromoteCode
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Test
-        uses: ./.github/actions/test-cloudformation-templates
-  Deploy:
-    needs: Test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Deploy to Test
-        if: github.event.inputs.target_branch == 'test'
-        uses: ./.github/actions/deploy-cloudformation-templates
-        with:
-          account-number: ${{ secrets.TEST_ACCOUNT_NUMBER }}
-          environment-name: 'test'
-      - name: Deploy to Staging
-        if: github.event.inputs.target_branch == 'staging'
-        uses: ./.github/actions/deploy-cloudformation-templates
-        with:
-          account-number: ${{ secrets.STAGING_ACCOUNT_NUMBER }}
-          environment-name: 'staging'
-      - name: Deploy to Prod
-        if: github.event.inputs.target_branch == 'main'
-        uses: ./.github/actions/deploy-cloudformation-templates
-        with:
-          account-number: ${{ secrets.PROD_ACCOUNT_NUMBER }}
-          environment-name: 'prod'
+  # Test:
+  #   needs: PromoteCode
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Test
+  #       uses: ./.github/actions/test-cloudformation-templates
+  # Deploy:
+  #   needs: Test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+  #     - name: Deploy to Test
+  #       if: github.event.inputs.target_branch == 'test'
+  #       uses: ./.github/actions/deploy-cloudformation-templates
+  #       with:
+  #         account-number: ${{ secrets.TEST_ACCOUNT_NUMBER }}
+  #         environment-name: 'test'
+  #     - name: Deploy to Staging
+  #       if: github.event.inputs.target_branch == 'staging'
+  #       uses: ./.github/actions/deploy-cloudformation-templates
+  #       with:
+  #         account-number: ${{ secrets.STAGING_ACCOUNT_NUMBER }}
+  #         environment-name: 'staging'
+  #     - name: Deploy to Prod
+  #       if: github.event.inputs.target_branch == 'main'
+  #       uses: ./.github/actions/deploy-cloudformation-templates
+  #       with:
+  #         account-number: ${{ secrets.PROD_ACCOUNT_NUMBER }}
+  #         environment-name: 'prod'
 
