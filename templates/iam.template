@@ -40,7 +40,7 @@ Resources:
         - Key: "secops:tags:managed_by"
           Value: "AWS Managed Security Pipeline"
         - Key: DeployDateTime
-          Value: Jan302022_0716
+          Value: Jan302022_2137
   GitHubActionsS3ListPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
